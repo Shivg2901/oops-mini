@@ -221,20 +221,16 @@ public class CreateDocumentPanel extends JPanel {
                     selectedFilePath != null ? selectedFilePath : "",
                     loggedInUser);
 
-            // Set additional properties
             newDoc.setCategory((Category) categoryComboBox.getSelectedItem());
             newDoc.setTopic((Topic) topicComboBox.getSelectedItem());
             newDoc.setStatus((String) statusComboBox.getSelectedItem());
 
-            // Add tags
             for (Tag tag : selectedTags) {
                 newDoc.addTag(tag);
             }
 
-            // Call create method
             newDoc.create();
 
-            // Add to user's documents
             loggedInUser.addDocument(newDoc);
 
             JOptionPane.showMessageDialog(this,
@@ -242,7 +238,6 @@ public class CreateDocumentPanel extends JPanel {
                     "Success",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Navigate back to home page
             JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
             currentFrame.getContentPane().removeAll();
             currentFrame.getContentPane().add(new HomePagePanel(loggedInUser));
@@ -257,7 +252,6 @@ public class CreateDocumentPanel extends JPanel {
         }
     }
 
-    // Helper method to get sample categories (replace with your actual categories)
     private Category[] getSampleCategories() {
         return new Category[] {
                 new Category("Technical", "Technical documentation"),
@@ -267,7 +261,6 @@ public class CreateDocumentPanel extends JPanel {
         };
     }
 
-    // Helper method to get sample topics (replace with your actual topics)
     private Topic[] getSampleTopics() {
         return new Topic[] {
                 new Topic("Development", "Software development"),
