@@ -7,6 +7,11 @@ public class Tag {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return name;
+    }
+
     public String getName() {
         return name;
     }

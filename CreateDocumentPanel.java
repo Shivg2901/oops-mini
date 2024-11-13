@@ -4,6 +4,11 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.File;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.JDialog;
+import javax.swing.JCheckBox;
+import javax.swing.BoxLayout;
 
 public class CreateDocumentPanel extends JPanel {
     private User loggedInUser;
@@ -84,15 +89,16 @@ public class CreateDocumentPanel extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0.0;
-        formPanel.add(new JLabel("Tags:"), gbc);
+        formPanel.add(new JLabel("Selected Tags:"), gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         JPanel tagsPanel = new JPanel(new BorderLayout());
-        tagsField = new JTextField();
-        JButton addTagButton = new JButton("Add Tag");
-        tagsPanel.add(tagsField, BorderLayout.CENTER);
-        tagsPanel.add(addTagButton, BorderLayout.EAST);
+        DefaultListModel<Tag> selectedTagsModel = new DefaultListModel<>();
+        JList<Tag> selectedTagsList = new JList<>(selectedTagsModel);
+        JButton selectTagsButton = new JButton("Select Tags");
+        tagsPanel.add(new JScrollPane(selectedTagsList), BorderLayout.CENTER);
+        tagsPanel.add(selectTagsButton, BorderLayout.EAST);
         formPanel.add(tagsPanel, gbc);
 
         // File Selection
@@ -151,14 +157,57 @@ public class CreateDocumentPanel extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Add button listeners
-        addTagButton.addActionListener(e -> {
-            String tagText = tagsField.getText().trim();
-            if (!tagText.isEmpty()) {
-                Tag newTag = new Tag(tagText, "");
-                selectedTags.add(newTag);
-                tagsField.setText("");
-                JOptionPane.showMessageDialog(this, "Tag added: " + tagText);
+        selectTagsButton.addActionListener(e -> {
+            // Create a dialog for tag selection
+            JDialog tagDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Select Tags", true);
+            tagDialog.setLayout(new BorderLayout());
+
+            // Create a list with checkboxes
+            JPanel checkBoxPanel = new JPanel();
+            checkBoxPanel.setLayout(new BoxLayout(checkBoxPanel, BoxLayout.Y_AXIS));
+
+            Tag[] availableTags = getSampleTags();
+            List<JCheckBox> checkBoxes = new ArrayList<>();
+
+            for (Tag tag : availableTags) {
+                JCheckBox checkBox = new JCheckBox(tag.getName());
+                checkBox.setSelected(selectedTags.contains(tag));
+                checkBoxes.add(checkBox);
+                checkBoxPanel.add(checkBox);
             }
+
+            // Add scroll pane for many tags
+            JScrollPane scrollPane = new JScrollPane(checkBoxPanel);
+            tagDialog.add(scrollPane, BorderLayout.CENTER);
+
+            // Add OK and Cancel buttons
+            JPanel buttonPanel2 = new JPanel();
+            JButton okButton = new JButton("OK");
+            JButton cancelButton2 = new JButton("Cancel");
+
+            okButton.addActionListener(evt -> {
+                selectedTags.clear();
+                selectedTagsModel.clear();
+
+                for (int i = 0; i < checkBoxes.size(); i++) {
+                    if (checkBoxes.get(i).isSelected()) {
+                        Tag selectedTag = availableTags[i];
+                        selectedTags.add(selectedTag);
+                        selectedTagsModel.addElement(selectedTag);
+                    }
+                }
+                tagDialog.dispose();
+            });
+
+            cancelButton2.addActionListener(evt -> tagDialog.dispose());
+
+            buttonPanel2.add(okButton);
+            buttonPanel2.add(cancelButton2);
+            tagDialog.add(buttonPanel2, BorderLayout.SOUTH);
+
+            tagDialog.setSize(300, 400);
+            tagDialog.setLocationRelativeTo(this);
+            tagDialog.setVisible(true);
         });
 
         browseButton.addActionListener(e -> {
@@ -209,8 +258,7 @@ public class CreateDocumentPanel extends JPanel {
 
     private void saveDocument() {
         try {
-            // Generate a simple ID (in production, this should be handled by a proper ID
-            // generation system)
+
             int newId = (int) (Math.random() * 10000);
 
             Document newDoc = new Document(
@@ -267,6 +315,19 @@ public class CreateDocumentPanel extends JPanel {
                 new Topic("Design", "Design documents"),
                 new Topic("Requirements", "Requirements documents"),
                 new Topic("General", "General topics")
+        };
+    }
+
+    private Tag[] getSampleTags() {
+        return new Tag[] {
+                new Tag("Java", "Java programming"),
+                new Tag("Python", "Python programming"),
+                new Tag("Documentation", "Documentation related"),
+                new Tag("Tutorial", "Tutorial content"),
+                new Tag("API", "API documentation"),
+                new Tag("Database", "Database related"),
+                new Tag("Security", "Security topics"),
+                new Tag("Testing", "Testing related")
         };
     }
 }

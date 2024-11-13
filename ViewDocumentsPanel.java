@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ViewDocumentsPanel extends JPanel {
     private User loggedInUser;
@@ -25,7 +26,8 @@ public class ViewDocumentsPanel extends JPanel {
         add(topPanel, BorderLayout.NORTH);
 
         // Create table with more columns to match your Document class
-        String[] columnNames = { "ID", "Title", "Description", "Status", "Version", "Created Date", "Last Modified" };
+        String[] columnNames = { "ID", "Title", "Description", "Status", "Version", "Created Date", "Last Modified",
+                "Category", "Topic", "Tags" };
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -33,6 +35,7 @@ public class ViewDocumentsPanel extends JPanel {
             }
         };
         documentsTable = new JTable(tableModel);
+        documentsTable.setRowHeight(25);
         documentsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(documentsTable);
         add(scrollPane, BorderLayout.CENTER);
@@ -137,7 +140,13 @@ public class ViewDocumentsPanel extends JPanel {
                     doc.getStatus(),
                     doc.getVersion(),
                     doc.getCreatedAt().format(DATE_FORMATTER),
-                    doc.getLastModified().format(DATE_FORMATTER)
+                    doc.getLastModified().format(DATE_FORMATTER),
+                    doc.getCategory() != null ? doc.getCategory().getName() : "N/A",
+                    doc.getTopic() != null ? doc.getTopic().getName() : "N/A",
+                    doc.getTags() != null
+                            ? String.join(", ", doc.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
+                            : "N/A"
+
             };
             tableModel.addRow(row);
         }
@@ -170,6 +179,9 @@ public class ViewDocumentsPanel extends JPanel {
         detailsPanel.add(new JLabel("Status:"));
         detailsPanel.add(new JLabel(doc.getStatus()));
 
+        detailsPanel.add(new JLabel("File Path:"));
+        detailsPanel.add(new JLabel(doc.getFilePath() != null ? doc.getFilePath() : "N/A"));
+
         detailsPanel.add(new JLabel("Version:"));
         detailsPanel.add(new JLabel(doc.getVersion()));
 
@@ -178,6 +190,11 @@ public class ViewDocumentsPanel extends JPanel {
 
         detailsPanel.add(new JLabel("Last Modified:"));
         detailsPanel.add(new JLabel(doc.getLastModified().format(DATE_FORMATTER)));
+
+        detailsPanel.add(new JLabel("Tags:"));
+        detailsPanel.add(new JLabel(doc.getTags() != null
+                ? String.join(", ", doc.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
+                : "N/A"));
 
         detailsPanel.add(new JLabel("Description:"));
         JTextArea descArea = new JTextArea(doc.getDescription());
