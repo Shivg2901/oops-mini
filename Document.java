@@ -6,27 +6,30 @@ import java.util.List;
 public class Document {
     private int id;
     private String title;
-    private String content;
+    // private String content;
     private String description;
     private String status;
     private String filePath;
     private LocalDateTime createdAt;
     private LocalDateTime lastModified;
+    private LocalDateTime lastModifiedDate;
+    private String lastModifiedBy;
     private User creator;
     private Category category;
     private Topic topic;
     private List<Tag> tags;
     private String version;
 
-    public Document(int id, String title, String content, String description, String filePath, User creator) {
+    public Document(int id, String title, String description, String filePath, User creator) {
         this.id = id;
         this.title = title;
-        this.content = content;
+        // this.content = content;
         this.description = description;
         this.filePath = filePath;
         this.creator = creator;
         this.createdAt = LocalDateTime.now();
         this.lastModified = LocalDateTime.now();
+        this.lastModifiedDate = LocalDateTime.now();
         this.tags = new ArrayList<>();
         this.version = "1.0";
         this.status = "Draft";
@@ -51,6 +54,10 @@ public class Document {
         if (!tags.contains(tag)) {
             tags.add(tag);
         }
+    }
+
+    public void setTags(List<Tag> tags) {
+        this.tags = tags;
     }
 
     public void removeTag(Tag tag) {
@@ -81,13 +88,9 @@ public class Document {
         return title;
     }
 
-    public String getContent() {
-        return content;
-    }
-
     public String getDescription() {
         return description;
-    } // Added missing getter
+    }
 
     public String getFilePath() {
         return filePath;
@@ -131,11 +134,6 @@ public class Document {
         this.lastModified = LocalDateTime.now();
     }
 
-    public void setContent(String content) {
-        this.content = content;
-        this.lastModified = LocalDateTime.now();
-    }
-
     public void setDescription(String description) {
         this.description = description;
         this.lastModified = LocalDateTime.now();
@@ -149,5 +147,14 @@ public class Document {
     public void setStatus(String status) {
         this.status = status;
         this.lastModified = LocalDateTime.now();
+    }
+
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
+        this.lastModified = LocalDateTime.now();
+    }
+
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+        this.lastModified = lastModifiedDate;
     }
 }

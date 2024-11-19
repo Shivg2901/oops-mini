@@ -7,6 +7,11 @@ public class Topic {
         this.description = description;
     }
 
+    public Topic(String name) {
+        this.name = name;
+
+    }
+
     @Override
     public String toString() {
         return name;

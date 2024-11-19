@@ -65,7 +65,7 @@ public class HomePagePanel extends JPanel {
             public void run() {
                 JFrame loginFrame = new JFrame("Login");
                 loginFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                loginFrame.setSize(400, 300);
+                loginFrame.setSize(800, 600);
                 loginFrame.setLocationRelativeTo(null);
                 loginFrame.add(new LoginPanel(new java.util.ArrayList<User>()));
                 loginFrame.setVisible(true);

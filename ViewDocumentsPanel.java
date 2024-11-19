@@ -3,7 +3,11 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,21 +15,35 @@ public class ViewDocumentsPanel extends JPanel {
     private User loggedInUser;
     private JTable documentsTable;
     private DefaultTableModel tableModel;
+    private List<Document> originalDocuments;
     private List<Document> documents;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private JTextField searchField;
 
     public ViewDocumentsPanel(User loggedInUser) {
         this.loggedInUser = loggedInUser;
+        this.originalDocuments = loggedInUser.getDocuments();
+        this.documents = new ArrayList<>(originalDocuments); // Initialize displayed list
         setLayout(new BorderLayout());
 
         // Create top panel with title
-        JPanel topPanel = new JPanel();
+        JPanel topPanel = new JPanel(new BorderLayout());
         JLabel titleLabel = new JLabel("My Documents", SwingConstants.CENTER);
         titleLabel.setFont(titleLabel.getFont().deriveFont(20.0f));
-        topPanel.add(titleLabel);
+        topPanel.add(titleLabel, BorderLayout.NORTH);
+
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        JLabel searchLabel = new JLabel("Search:");
+        searchField = new JTextField(20);
+        JButton searchButton = new JButton("Search");
+        searchPanel.add(searchLabel, BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        searchPanel.add(searchButton, BorderLayout.EAST);
+        topPanel.add(searchPanel, BorderLayout.SOUTH);
+
         add(topPanel, BorderLayout.NORTH);
 
-        // Create table with more columns to match your Document class
+        // Create table with columns matching your Document class
         String[] columnNames = { "ID", "Title", "Description", "Status", "Version", "Created Date", "Last Modified",
                 "Category", "Topic", "Tags" };
         tableModel = new DefaultTableModel(columnNames, 0) {
@@ -43,10 +61,13 @@ public class ViewDocumentsPanel extends JPanel {
         // Create buttons panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton viewButton = new JButton("View Details");
+        JButton viewContentButton = new JButton("View Content");
+
         JButton editButton = new JButton("Edit");
         JButton deleteButton = new JButton("Delete");
         JButton backButton = new JButton("Back");
 
+        buttonPanel.add(viewContentButton);
         buttonPanel.add(viewButton);
         buttonPanel.add(editButton);
         buttonPanel.add(deleteButton);
@@ -56,7 +77,7 @@ public class ViewDocumentsPanel extends JPanel {
         // Load documents
         loadDocuments();
 
-        // Add button listeners
+        // Button listeners
         viewButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -122,16 +143,47 @@ public class ViewDocumentsPanel extends JPanel {
                 currentFrame.repaint();
             }
         });
+
+        viewContentButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedRow = documentsTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    Document selectedDoc = documents.get(selectedRow);
+                    showDocumentContent(selectedDoc);
+                } else {
+                    JOptionPane.showMessageDialog(ViewDocumentsPanel.this,
+                            "Please select a document to view content",
+                            "No Selection",
+                            JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                loadDocuments();
+            }
+        });
     }
 
     private void loadDocuments() {
         // Clear existing table data
         tableModel.setRowCount(0);
 
-        // Get documents for logged in user
-        documents = loggedInUser.getDocuments();
+        // Filter documents based on the search query
+        String searchQuery = searchField.getText().toLowerCase();
+        documents = originalDocuments.stream()
+                .filter(doc -> doc.getTitle().toLowerCase().contains(searchQuery)
+                        || doc.getDescription().toLowerCase().contains(searchQuery)
+                        || (doc.getCategory() != null
+                                && doc.getCategory().getName().toLowerCase().contains(searchQuery))
+                        || (doc.getTopic() != null && doc.getTopic().getName().toLowerCase().contains(searchQuery))
+                        || doc.getTags().stream().anyMatch(tag -> tag.getName().toLowerCase().contains(searchQuery)))
+                .collect(Collectors.toList());
 
-        // Add documents to table
+        // Populate the table with filtered documents
         for (Document doc : documents) {
             Object[] row = {
                     doc.getId(),
@@ -146,10 +198,49 @@ public class ViewDocumentsPanel extends JPanel {
                     doc.getTags() != null
                             ? String.join(", ", doc.getTags().stream().map(Tag::getName).collect(Collectors.toList()))
                             : "N/A"
-
             };
             tableModel.addRow(row);
         }
+    }
+
+    private void showDocumentContent(Document doc) {
+        JDialog contentDialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Document Content", true);
+        contentDialog.setLayout(new BorderLayout());
+
+        JPanel pathPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        pathPanel.add(new JLabel("File Path:"));
+        pathPanel.add(new JLabel(doc.getFilePath() != null ? doc.getFilePath() : "N/A"));
+        contentDialog.add(pathPanel, BorderLayout.NORTH);
+
+        if (doc.getFilePath() != null && !doc.getFilePath().isEmpty()) {
+            try {
+                String content = Files.readString(Paths.get(doc.getFilePath()));
+                JTextArea contentArea = new JTextArea(content);
+                contentArea.setEditable(false);
+                contentArea.setLineWrap(true);
+                contentArea.setWrapStyleWord(true);
+                JScrollPane contentScrollPane = new JScrollPane(contentArea);
+                contentScrollPane.setPreferredSize(new Dimension(480, 300));
+
+                contentDialog.add(contentScrollPane, BorderLayout.CENTER);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Unable to read file content: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> contentDialog.dispose());
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(closeButton);
+        contentDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        contentDialog.setSize(500, 400);
+        contentDialog.setLocationRelativeTo(this);
+        contentDialog.setVisible(true);
     }
 
     private void showDocumentDetails(Document doc) {
@@ -205,6 +296,26 @@ public class ViewDocumentsPanel extends JPanel {
 
         dialog.add(detailsPanel, BorderLayout.CENTER);
 
+        // Read and display file content if available
+        if (doc.getFilePath() != null && !doc.getFilePath().isEmpty()) {
+            try {
+                String content = Files.readString(Paths.get(doc.getFilePath()));
+                JTextArea contentArea = new JTextArea(content);
+                contentArea.setEditable(false);
+                contentArea.setLineWrap(true);
+                contentArea.setWrapStyleWord(true);
+                JScrollPane contentScrollPane = new JScrollPane(contentArea);
+                contentScrollPane.setPreferredSize(new Dimension(480, 200));
+
+                dialog.add(contentScrollPane, BorderLayout.SOUTH);
+            } catch (IOException e) {
+                // JOptionPane.showMessageDialog(this,
+                // "Unable to read file content: " + e.getMessage(),
+                // "Error",
+                // JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dialog.dispose());
 
@@ -212,17 +323,15 @@ public class ViewDocumentsPanel extends JPanel {
         buttonPanel.add(closeButton);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
 
-        dialog.setSize(500, 400);
+        dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 
     private void editDocument(Document doc) {
-        // Create edit document panel and switch to it
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         currentFrame.getContentPane().removeAll();
-        // You'll need to create an EditDocumentPanel class
-        // currentFrame.getContentPane().add(new EditDocumentPanel(loggedInUser, doc));
+        currentFrame.getContentPane().add(new EditDocumentPanel(loggedInUser, doc));
         currentFrame.revalidate();
         currentFrame.repaint();
     }
@@ -230,6 +339,9 @@ public class ViewDocumentsPanel extends JPanel {
     private void deleteDocument(int selectedRow) {
         Document docToDelete = documents.get(selectedRow);
         docToDelete.delete(); // Call the document's delete method
+
+        // Remove from both the displayed list and the original master list
+        originalDocuments.remove(docToDelete);
         documents.remove(selectedRow);
         tableModel.removeRow(selectedRow);
 

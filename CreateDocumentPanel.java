@@ -132,18 +132,18 @@ public class CreateDocumentPanel extends JPanel {
         formPanel.add(descScrollPane, gbc);
 
         // Content
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        gbc.weightx = 0.0;
-        formPanel.add(new JLabel("Content:"), gbc);
+        // gbc.gridx = 0;
+        // gbc.gridy = 7;
+        // gbc.weightx = 0.0;
+        // formPanel.add(new JLabel("Content:"), gbc);
 
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        contentArea = new JTextArea(10, 30);
-        contentArea.setLineWrap(true);
-        contentArea.setWrapStyleWord(true);
-        JScrollPane contentScrollPane = new JScrollPane(contentArea);
-        formPanel.add(contentScrollPane, gbc);
+        // gbc.gridx = 1;
+        // gbc.weightx = 1.0;
+        // contentArea = new JTextArea(10, 30);
+        // contentArea.setLineWrap(true);
+        // contentArea.setWrapStyleWord(true);
+        // JScrollPane contentScrollPane = new JScrollPane(contentArea);
+        // formPanel.add(contentScrollPane, gbc);
 
         // Add form panel to center
         add(new JScrollPane(formPanel), BorderLayout.CENTER);
@@ -245,10 +245,10 @@ public class CreateDocumentPanel extends JPanel {
             showError("Please enter a description");
             return false;
         }
-        if (contentArea.getText().trim().isEmpty()) {
-            showError("Please enter content");
-            return false;
-        }
+        // if (contentArea.getText().trim().isEmpty()) {
+        // showError("Please enter content");
+        // return false;
+        // }
         return true;
     }
 
@@ -264,7 +264,7 @@ public class CreateDocumentPanel extends JPanel {
             Document newDoc = new Document(
                     newId,
                     titleField.getText().trim(),
-                    contentArea.getText().trim(),
+
                     descriptionArea.getText().trim(),
                     selectedFilePath != null ? selectedFilePath : "",
                     loggedInUser);
